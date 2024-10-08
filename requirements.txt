@@ -1,5 +1,4 @@
-﻿flask
+﻿Flask
 chempy
 flask_login
 werkzeug
-rdkit
