@@ -7,7 +7,9 @@ import flask_login
 import json
 from flask_login import login_required, UserMixin, LoginManager, login_user
 from werkzeug.utils import secure_filename
-from rdkit import Chem
+import requests
+from bs4 import BeautifulSoup
+from urllib.parse import quote
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
@@ -224,14 +226,6 @@ def uravnivanie(formula):
     return otvet
 
 
-def add_formula_with_rdkit(formula):
-    mol = Chem.MolFromSmiles(formula)
-    if mol is not None:
-        return Chem.MolToSmiles(mol)
-    else:
-        return "Некорректная формула"
-
-
 @app.route('/', methods=['GET', 'POST'])
 def osnova():
     user = flask_login.current_user
@@ -269,29 +263,45 @@ def molyar_massa():
     return render_template('molyarnaya_massa.html', resultat=resultat, dlyproverki=dlyproverki, user=user, otdelno=otdelno)
 
 
-def completed_reaction(user_reaction):
-    react = ''
-    with open('reactions.txt', 'r', encoding='utf-8') as file:
-        reactions = file.readlines()
-    for line in reactions:
-        if line.strip().startswith(user_reaction):  # Сравниваем с пользовательским вводом
-            react = line.strip()
-            break
-    else:
-        react = 'Такой реакции не существует, или ее нет в нашей базе данных'
-    return react
+def get_chemical_equation_solution(reaction):
+    if request.method == 'POST':
+        reaction = request.form.get("chemical_formula", False)
+    # Кодируем реакцию для URL
+        encoded_reaction = quote(reaction)
+
+    # Формируем URL с учетом химической реакции
+        url = f"https://chemequations.com/ru/?s={encoded_reaction}"
+
+    # Отправляем GET-запрос
+        response = requests.get(url)
+
+    # Проверка успешности запроса
+        if response.status_code == 200:
+            # Парсим HTML-ответ
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Находим элемент с классом "equation main-equation well"
+            result = soup.find('h1', class_='equation main-equation well')
+
+            if result:
+                return result.get_text(strip=True)
+                # Возвращаем текст ответа
+            else:
+                return 'Решение не найдено.'
+        else:
+            return f"Ошибка при запросе: {response.status_code}"
 
 
 @app.route('/complete_reaction', methods=['GET', 'POST'])
 def complete_reaction_page():
     react1 = ''
     user = flask_login.current_user
-    reaction1 = ''
+    reaction = ''
     if request.method == 'POST':
-        reaction1 = request.form.get("chemical_formula", False)
-        react1 = completed_reaction(reaction1)
+        reaction = request.form.get("chemical_formula", False)
+        react1 = get_chemical_equation_solution(reaction)
 
-    return render_template('complete_reaction.html', completed_reaction=completed_reaction, react1=react1, user=user, reaction1=reaction1)
+    return render_template('complete_reaction.html', get_chemical_equation_solution=get_chemical_equation_solution, react1=react1, user=user, reaction=reaction)
 
 
 @app.route('/aboutme', methods=['GET', 'POST'])
