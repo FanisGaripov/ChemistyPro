@@ -304,6 +304,43 @@ def complete_reaction_page():
     return render_template('complete_reaction.html', get_chemical_equation_solution=get_chemical_equation_solution, react1=react1, user=user, reaction=reaction)
 
 
+def get_reaction_chain(reaction):
+    if request.method == 'POST':
+        reaction = request.form.get("chemical_formula", False)
+        url = f"https://chemer.ru/services/reactions/chains/{reaction}"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+        }
+        session = requests.Session()
+        session.headers.update(headers)
+        response = session.get(url)
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            content_sections = soup.find_all('section', class_='content')  # Ищем все секции с классом 'content'
+
+            results = []  # Список для хранения первых ответов из каждой секции
+
+            for content_section in content_sections:
+                reactions = content_section.find_all('p', class_='resizable-block')  # Ищем все 'p' внутри каждой секции
+                if reactions:
+                    first_reaction = reactions[0].get_text().strip()  # Берем первый ответ из секции
+                    results.append(first_reaction)  # Добавляем его в результаты
+
+            return results  # Возвращаем список первых ответов из всех секций
+
+
+@app.route('/get_reaction_chain', methods=['GET', 'POST'])
+def get_reaction_chain_page():
+    user = flask_login.current_user
+    react2 = ''
+    reaction = ''
+    if request.method == 'POST':
+        reaction = request.form.get("chemical_formula", False)
+        react2 = get_reaction_chain(reaction)
+
+    return render_template('get_reaction_chain.html', get_reaction_chain=get_reaction_chain, user=user, reaction=reaction, react2=react2)
+
+
 @app.route('/aboutme', methods=['GET', 'POST'])
 def aboutme():
     user = flask_login.current_user
