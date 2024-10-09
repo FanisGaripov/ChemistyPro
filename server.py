@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote
+# импортируем все библиотеки
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
@@ -22,8 +23,7 @@ db.init_app(app)
 c = []
 
 def molecular_mass(formula):
-    # Словарь с атомными массами элементов(можно внести в бд)
-    global c
+    # Словарь с атомными массами элементов
     atomic_masses = {
         'H': 1.008,
         'He': 4.0026,
@@ -147,13 +147,15 @@ def molecular_mass(formula):
 
     mass = 0.0
     elements = re.findall(r'([A-Z][a-z]?)(\d*)', formula)
-    c = []
+    element_details = []  # Список для хранения деталей элементов
     for element, count in elements:
-        b = (atomic_masses[element] * (int(count) if count else 1))
-        c.append(b)
-        mass += atomic_masses[element] * (int(count) if count else 1)
+        count = int(count) if count else 1  # Установите 1, если count отсутствует
+        element_mass = atomic_masses[element]
+        total_mass = element_mass * count
+        element_details.append((element, atomic_masses[element], count, total_mass))  # Добавляем элемент, его массу, количество и общую массу
+        mass += total_mass
 
-    return round(mass)
+    return round(mass), element_details  # Возвращаем общую массу и детали элементов
 
 
 def electronic_configuration(element):
@@ -201,6 +203,7 @@ def electronic_configuration(element):
 
 @app.route('/electronic_configuration', methods=['GET', 'POST'])
 def electronic_configuration_page():
+    # функция, которая отображает страницу электронной конфигурации, предыдущая функция отвечает за обработку ответа
     element = ''
     user = flask_login.current_user
     configuration = ''
@@ -211,6 +214,7 @@ def electronic_configuration_page():
 
 
 def uravnivanie(formula):
+    # баланс уравнений
     reactants_input, products_input = formula.split('=')
     reactants = {x.split()[0].strip(): int(x.split()[1]) if len(x.split()) > 1 else 1 for x in
                  reactants_input.split('+')}
@@ -228,6 +232,7 @@ def uravnivanie(formula):
 
 @app.route('/', methods=['GET', 'POST'])
 def osnova():
+    # функция которая возвращает главную страницу сайта( index.html )
     user = flask_login.current_user
     resultat2 = ''
     if request.method == 'POST':
@@ -242,24 +247,23 @@ def osnova():
 
 @app.route('/molyarnaya_massa', methods=['GET', 'POST'])
 def molyar_massa():
+    # метод для вычисления молярной массы и отображения ее на сайте
     user = flask_login.current_user
     global resultat, dlyproverki, c
     resultat = ''
-    otdelno = ''
+    otdelno = []
     formatspisok = ''
     dlyproverki = 0
     if request.method == 'POST':
         chemical_formula = request.form['element']
         try:
-            resultat = f"Молярная масса {chemical_formula}: {int(molecular_mass(chemical_formula))} г/моль"
-            print(f"Молярная масса {chemical_formula}: {molecular_mass(chemical_formula)} г/моль")
-            formatspisok = c
-            otdelno = [round(elem, 1) for elem in formatspisok]
-            dlyproverki = round(molecular_mass(chemical_formula))
-            for item in otdelno:
-                print(item)
-        except:
-            redirect('/')
+            dlyproverki, element_details = molecular_mass(chemical_formula)
+            resultat = f"Молярная масса {chemical_formula}: {dlyproverki} г/моль"
+            for element, mass, count, total_mass in element_details:
+                otdelno.append(f"{count} x {element} ({round(mass)} г/моль): {round(total_mass)} г")
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            return redirect('/')
     return render_template('molyarnaya_massa.html', resultat=resultat, dlyproverki=dlyproverki, user=user, otdelno=otdelno)
 
 
@@ -294,6 +298,7 @@ def get_chemical_equation_solution(reaction):
 
 @app.route('/complete_reaction', methods=['GET', 'POST'])
 def complete_reaction_page():
+    # страница, отвечающая за вывод завершенных реакций предыдущим методом
     react1 = ''
     user = flask_login.current_user
     reaction = ''
@@ -305,6 +310,7 @@ def complete_reaction_page():
 
 
 def get_reaction_chain(reaction):
+    # цепочка превращений
     if request.method == 'POST':
         reaction = request.form.get("chemical_formula", False)
         url = f"https://chemer.ru/services/reactions/chains/{reaction}"
@@ -331,6 +337,7 @@ def get_reaction_chain(reaction):
 
 @app.route('/get_reaction_chain', methods=['GET', 'POST'])
 def get_reaction_chain_page():
+    # страница, которая выводит цепочку превращений, т.е прошлую функцию
     user = flask_login.current_user
     react2 = ''
     reaction = ''
@@ -343,24 +350,31 @@ def get_reaction_chain_page():
 
 @app.route('/aboutme', methods=['GET', 'POST'])
 def aboutme():
+    # обо мне
     user = flask_login.current_user
-    return render_template('about.html', user=user)
+    if user.is_authenticated:
+        return render_template('about.html', user=user)
+    else:
+        return render_template('login.html', user=user)
 
 
 @app.route('/instruction', methods=['GET', 'POST'])
 def instruction():
+    # инструкция
     user = flask_login.current_user
     return render_template('instruction.html', user=user)
 
 
 @app.route('/tablica', methods=['GET', 'POST'])
 def tablica():
+    # таблица менделеева
     user = flask_login.current_user
     return render_template('tablica.html', user=user)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # вход пользователя в аккаунт. берутся данные из базы данных
     user = flask_login.current_user
     if request.method == 'POST':
         username = request.form['username']
@@ -389,6 +403,7 @@ def load_user_from_request(request):
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    # регистрация, идет работа с бд
     user = flask_login.current_user
     if request.method == 'POST':
         username = request.form['username']
@@ -409,6 +424,7 @@ def register():
 
 @app.route('/profile')
 def profile():
+    # профиль
     user = flask_login.current_user
     if user.is_authenticated:
         return render_template('profile.html', user=user)
