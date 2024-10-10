@@ -22,6 +22,14 @@ login_manager.init_app(app)
 db.init_app(app)
 c = []
 
+''' идеи:
+1.Добавление таблицы растворимостей VVV
+2.Ряд электроотрицательности элементов 
+3.Электрохимический ряд активности металлов VV
+4.Ряд силы кислот VV
+5.Кислоты и кислотные остатки VV
+'''
+
 def molecular_mass(formula):
     # Словарь с атомными массами элементов
     atomic_masses = {
@@ -370,6 +378,20 @@ def tablica():
     # таблица менделеева
     user = flask_login.current_user
     return render_template('tablica.html', user=user)
+
+
+@app.route('/tablica_rastvorimosti', methods=['GET', 'POST'])
+def tablica_rastvorimosti():
+    # таблица растворимости
+    user = flask_login.current_user
+    return render_template('tablica_rastvorimosti.html', user=user)
+
+
+@app.route('/tablica_kislotnosti', methods=['GET', 'POST'])
+def tablica_kislotnosti():
+    # таблица кислот ( ошибка в названии функции ) :))
+    user = flask_login.current_user
+    return render_template('tablica_kislotnosti.html', user=user)
 
 
 @app.route('/login', methods=['GET', 'POST'])
