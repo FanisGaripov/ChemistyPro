@@ -239,6 +239,12 @@ def uravnivanie(formula):
 
 
 @app.route('/', methods=['GET', 'POST'])
+def main():
+    user = flask_login.current_user
+    return render_template('main.html', user=user)
+
+
+@app.route('/uravnivanie', methods=['GET', 'POST'])
 def osnova():
     # функция которая возвращает главную страницу сайта( index.html )
     user = flask_login.current_user
