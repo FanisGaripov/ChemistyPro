@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote
+import random
 # импортируем все библиотеки
 
 app = Flask(__name__)
@@ -240,13 +241,14 @@ def uravnivanie(formula):
 
 @app.route('/', methods=['GET', 'POST'])
 def main():
+    #функция, которая возвращает главную страницу сайта( main.html )
     user = flask_login.current_user
     return render_template('main.html', user=user)
 
 
 @app.route('/uravnivanie', methods=['GET', 'POST'])
 def osnova():
-    # функция которая возвращает главную страницу сайта( index.html )
+    # функция которая возвращает уравнивание хим.реакций( index.html )
     user = flask_login.current_user
     resultat2 = ''
     if request.method == 'POST':
@@ -398,6 +400,256 @@ def tablica_kislotnosti():
     # таблица кислот ( ошибка в названии функции ) :))
     user = flask_login.current_user
     return render_template('tablica_kislotnosti.html', user=user)
+
+
+def minigamefunc():
+    # функция обработчик миниигры
+    a = random.randint(1, 118)
+    atomic_masses = {
+        'H': 'Водород',
+        'He': 'Гелий',
+        'Li': 'Литий',
+        'Be': 'Бериллий',
+        'B': 'Бор',
+        'C': 'Углерод',
+        'N': 'Азот',
+        'O': 'Кислород',
+        'F': 'Фтор',
+        'Ne': 'Неон',
+        'Na': 'Натрий',
+        'Mg': 'Магний',
+        'Al': 'Алюминий',
+        'Si': 'Кремний',
+        'P': 'Фосфор',
+        'S': 'Сера',
+        'Cl': 'Хлор',
+        'Ar': 'Аргон',
+        'K': 'Калий',
+        'Ca': 'Кальций',
+        'Sc': 'Скандий',
+        'Ti': 'Титан',
+        'V': 'Ванадий',
+        'Cr': 'Хром',
+        'Mn': 'Марганец',
+        'Fe': 'Железо',
+        'Co': 'Кобальт',
+        'Ni': 'Никель',
+        'Cu': 'Медь',
+        'Zn': 'Цинк',
+        'Ga': 'Галлий',
+        'Ge': 'Германий',
+        'As': 'Мышьяк',
+        'Se': 'Селен',
+        'Br': 'Бром',
+        'Kr': 'Криптон',
+        'Rb': 'Рубидий',
+        'Sr': 'Стронций',
+        'Y': 'Иттрий',
+        'Zr': 'Цирконий',
+        'Nb': 'Ниобий',
+        'Mo': 'Молибден',
+        'Tc': 'Технеций',
+        'Ru': 'Рутений',
+        'Rh': 'Родий',
+        'Pd': 'Палладий',
+        'Ag': 'Серебро',
+        'Cd': 'Кадмий',
+        'In': 'Индий',
+        'Sn': 'Олово',
+        'Sb': 'Сурьма',
+        'Te': 'Теллур',
+        'I': 'Йод',
+        'Xe': 'Ксенон',
+        'Cs': 'Цезий',
+        'Ba': 'Барий',
+        'La': 'Лантан',
+        'Ce': 'Церий',
+        'Pr': 'Празеодим',
+        'Nd': 'Неодим',
+        'Pm': 'Прометий',
+        'Sm': 'Самарий',
+        'Eu': 'Европий',
+        'Gd': 'Гадолиний',
+        'Tb': 'Тербий',
+        'Dy': 'Диспрозий',
+        'Ho': 'Гольмий',
+        'Er': 'Эрбий',
+        'Tm': 'Тулий',
+        'Yb': 'Иттербий',
+        'Lu': 'Лютеций',
+        'Hf': 'Гафний',
+        'Ta': 'Тантал',
+        'W': 'Вольфрам',
+        'Re': 'Рений',
+        'Os': 'Осмий',
+        'Ir': 'Иридий',
+        'Pt': 'Платина',
+        'Au': 'Золото',
+        'Hg': 'Ртуть',
+        'Tl': 'Таллий',
+        'Pb': 'Свинец',
+        'Bi': 'Висмут',
+        'Po': 'Полоний',
+        'At': 'Астат',
+        'Rn': 'Радон',
+        'Fr': 'Франций',
+        'Ra': 'Радий',
+        'Ac': 'Актиний',
+        'Th': 'Торий',
+        'Pa': 'Проактиний',
+        'U': 'Уран',
+        'Np': 'Нептуний',
+        'Pu': 'Плутоний',
+        'Am': 'Америций',
+        'Cm': 'Кюрий',
+        'Bk': 'Берклий',
+        'Cf': 'Калифорний',
+        'Es': 'Эйнштейний',
+        'Fm': 'Фермий',
+        'Md': 'Менделевий',
+        'No': 'Нобелий',
+        'Lr': 'Лоуренсий',
+        'Rf': 'Резерфордий',
+        'Db': 'Дубний',
+        'Sg': 'Сиборгий',
+        'Bh': 'Борий',
+        'Hs': 'Хассий',
+        'Mt': 'Майтнерий',
+        'Ds': 'Дармштадтий',
+        'Rg': 'Рентгений',
+        'Cn': 'Коперниций',
+        'Nh': 'Нихоний',
+        'Fl': 'Флеровий',
+        'Mc': 'Московий',
+        'Lv': 'Ливерморий',
+        'Ts': 'Теннессин',
+        'Og': 'Оганессон',
+    }
+    k = []
+    d = ''
+    b = ""
+    for i in atomic_masses:
+        k.append(i)
+    b = k[a]
+    nazv = atomic_masses[b]
+    print(b, nazv)
+    return b, nazv
+
+
+h = ["начало", "второй" ]
+pravilno = 0
+@app.route('/minigame', methods=['GET', 'POST'])
+def minigame():
+    '''функция, которая возвращает страницу мини-игры
+    Коротко о мини-игре:
+    Это Игра для запоминания элементов таблицы Менделеева.
+    Выводится элемент, а игрок должен написать, то как он называется на РУССКОМ языке'''
+    d = ""
+    otvety = 0
+    global h, pravilno
+    res = minigamefunc()
+    b = res[0]
+    nazv = res[1]
+    otvety = 0
+    user = flask_login.current_user
+    if request.method == 'POST':
+        element = request.form['element']
+        h.append(nazv)
+        print(h)
+        if element == h[-2]:
+            d = 'Верно, следующий'
+            pravilno += 1
+            otvety += 1
+            if pravilno == 10:
+                pravilno = 0
+                return render_template('winning.html', user=user, otvety=otvety, pravilno=pravilno)
+        else:
+            d = f'Неправильно, ответ: {h[-2]}'
+            otvety += 1
+    return render_template('minigame.html', user=user, d=d, minigamefunc=minigamefunc, b=b, pravilno=pravilno)
+
+
+def get_substance_html(substance_name):
+    url = "https://chemer.ru/services/organic/structural"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    }
+    session = requests.Session()
+    session.headers.update(headers)
+    response = session.get(url)
+
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.text, 'html.parser')
+        table = soup.find('table')
+        rows = table.find_all('tr')
+
+        for row in rows:
+            cols = row.find_all('td')
+            if cols:
+                name = cols[0].text.strip()
+                link = cols[0].find('a')['href']
+                if substance_name.lower() in name.lower():
+                    substance_url = f"https://chemer.ru/services/organic/{link}"
+                    substance_response = session.get(substance_url)
+                    return substance_response.text
+    return None
+
+
+def extract_svg_and_symbols(html_code):
+    soup = BeautifulSoup(html_code, 'html.parser')
+    svg_elements = soup.find_all('svg')
+    symbols = soup.find_all('symbol')
+
+    if not svg_elements:
+        return None, None, None
+
+    first_svg_content = str(svg_elements[0])
+    if 'width' not in first_svg_content or 'height' not in first_svg_content:
+        first_svg_content = first_svg_content.replace('<svg', '<svg width="200" height="200"')
+
+    isomer_svgs = []
+    spacing = 220  # Расстояние между изомерами
+    max_per_row = 20  # Максимум изомеров в строке
+
+    for index, svg in enumerate(svg_elements[1:]):
+        row = index // max_per_row  # Определяем номер строки
+        col = index % max_per_row  # Определяем номер колонки
+        x = col * spacing  # Устанавливаем x координату
+        y = row * 220  # Устанавливаем y координату для новой строки
+        svg_str = str(svg).replace('<svg', f'<svg x="{x}" y="{y}"')  # Устанавливаем координаты
+        isomer_svgs.append(svg_str)
+
+    isomer_svgs_content = ''.join(isomer_svgs)
+    symbol_content = ''.join(str(symbol) for symbol in symbols)
+
+    return first_svg_content, isomer_svgs_content, symbol_content
+
+
+@app.route('/orghim', methods=['GET', 'POST'])
+def orghim():
+    user = flask_login.current_user
+    if request.method == 'POST':
+        substance_name = request.form['substance_name']
+        html_code = get_substance_html(substance_name)
+
+        if html_code:
+            first_svg, isomers_svg, symbols_svg = extract_svg_and_symbols(html_code)
+
+            # Сохраняем первую SVG-картинку и символы в файл
+            if first_svg:
+                with open('static/output.svg', 'w', encoding='utf-8') as f:
+                    f.write(
+                        f"<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>{symbols_svg}{first_svg}</svg>")
+
+            # Сохраняем изомеры в отдельный файл
+            if isomers_svg.strip():
+                with open('static/isomers.svg', 'w', encoding='utf-8') as f:
+                    f.write(
+                        f"<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>{isomers_svg}</svg>")
+
+            return render_template('orghim.html', svg_file='output.svg', isomers_file='isomers.svg', substance_name=substance_name, user=user)
+
+    return render_template('orghim.html', svg_file=None, isomers_file=None, user=user)
 
 
 @app.route('/login', methods=['GET', 'POST'])
