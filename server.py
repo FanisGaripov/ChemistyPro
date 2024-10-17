@@ -381,6 +381,12 @@ def instruction():
     return render_template('instruction.html', user=user)
 
 
+@app.route('/documentation')
+def documentation():
+    user = flask_login.current_user
+    return render_template('documentation.html', user=user)
+
+
 @app.route('/tablica', methods=['GET', 'POST'])
 def tablica():
     # таблица менделеева
@@ -404,7 +410,7 @@ def tablica_kislotnosti():
 
 def minigamefunc():
     # функция обработчик миниигры
-    a = random.randint(1, 118)
+    a = random.randint(0, 117)
     atomic_masses = {
         'H': 'Водород',
         'He': 'Гелий',
@@ -536,8 +542,9 @@ def minigamefunc():
     return b, nazv
 
 
-h = ["начало", "второй" ]
+h = ['']
 pravilno = 0
+otvety = 0
 @app.route('/minigame', methods=['GET', 'POST'])
 def minigame():
     '''функция, которая возвращает страницу мини-игры
@@ -545,28 +552,29 @@ def minigame():
     Это Игра для запоминания элементов таблицы Менделеева.
     Выводится элемент, а игрок должен написать, то как он называется на РУССКОМ языке'''
     d = ""
-    otvety = 0
-    global h, pravilno
+    global h, pravilno, otvety
     res = minigamefunc()
     b = res[0]
     nazv = res[1]
-    otvety = 0
     user = flask_login.current_user
+    h.append(nazv)
     if request.method == 'POST':
         element = request.form['element']
-        h.append(nazv)
         print(h)
         if element == h[-2]:
             d = 'Верно, следующий'
             pravilno += 1
             otvety += 1
             if pravilno == 10:
+                right_percent = round((pravilno / otvety) * 100, 2)
                 pravilno = 0
-                return render_template('winning.html', user=user, otvety=otvety, pravilno=pravilno)
+                otvety = 0
+                h = ['']
+                return render_template('winning.html', user=user, right_percent=right_percent)
         else:
             d = f'Неправильно, ответ: {h[-2]}'
             otvety += 1
-    return render_template('minigame.html', user=user, d=d, minigamefunc=minigamefunc, b=b, pravilno=pravilno)
+    return render_template('minigame.html', user=user, d=d, minigamefunc=minigamefunc, b=b, pravilno=pravilno, otvety=otvety)
 
 
 def get_substance_html(substance_name):
