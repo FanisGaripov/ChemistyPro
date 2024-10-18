@@ -12,6 +12,7 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(100), nullable=False)
     surname = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
+    avatar = db.Column(db.String(150), default='default_avatar.png')
     pokupki = db.Column(db.Integer, nullable=True, default=0)
     summa = db.Column(db.Integer, nullable=True, default=0)
 
