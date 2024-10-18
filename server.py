@@ -16,7 +16,7 @@ import random
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///products.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'static/'
+app.config['UPLOAD_FOLDER'] = 'static/upload'
 app.secret_key = 'supersecretkey'
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -619,13 +619,21 @@ def extract_svg_and_symbols(html_code):
     spacing = 220  # Расстояние между изомерами
     max_per_row = 20  # Максимум изомеров в строке
 
-    for index, svg in enumerate(svg_elements[1:]):
-        row = index // max_per_row  # Определяем номер строки
-        col = index % max_per_row  # Определяем номер колонки
-        x = col * spacing  # Устанавливаем x координату
-        y = row * 220  # Устанавливаем y координату для новой строки
-        svg_str = str(svg).replace('<svg', f'<svg x="{x}" y="{y}"')  # Устанавливаем координаты
-        isomer_svgs.append(svg_str)
+    tab1_section = soup.find('section', id='tab1')
+
+    # Найдем все таблицы в секции tab1
+    tables = tab1_section.find_all('table')
+
+    for table in tables:
+        svg_elements2 = table.find_all('svg')
+
+        for index, svg in enumerate(svg_elements2):
+            row = index // max_per_row  # Определяем номер строки
+            col = index % max_per_row  # Определяем номер колонки
+            x = col * spacing  # Устанавливаем x координату
+            y = row * 220  # Устанавливаем y координату для новой строки
+            svg_str = str(svg).replace('<svg', f'<svg x="{x}" y="{y}"')  # Устанавливаем координаты
+            isomer_svgs.append(svg_str)
 
     isomer_svgs_content = ''.join(isomer_svgs)
     symbol_content = ''.join(str(symbol) for symbol in symbols)
@@ -635,6 +643,7 @@ def extract_svg_and_symbols(html_code):
 
 @app.route('/orghim', methods=['GET', 'POST'])
 def orghim():
+    isomer_files = []
     user = flask_login.current_user
     if request.method == 'POST':
         substance_name = request.form['substance_name']
@@ -649,15 +658,19 @@ def orghim():
                     f.write(
                         f"<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>{symbols_svg}{first_svg}</svg>")
 
-            # Сохраняем изомеры в отдельный файл
+            # Сохраняем изомеры в отдельные файлы
             if isomers_svg.strip():
-                with open('static/isomers.svg', 'w', encoding='utf-8') as f:
-                    f.write(
-                        f"<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>{isomers_svg}</svg>")
+                isomer_files = []
+                for index, svg in enumerate(isomers_svg.split('</svg>')):
+                    if svg.strip():
+                        file_name = f'static/isomer_{index}.svg'
+                        with open(file_name, 'w', encoding='utf-8') as f:
+                            f.write(f"<svg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'>{svg}</svg>")
+                        isomer_files.append(file_name)
 
-            return render_template('orghim.html', svg_file='output.svg', isomers_file='isomers.svg', substance_name=substance_name, user=user)
+            return render_template('orghim.html', svg_file='output.svg', isomer_files=isomer_files, substance_name=substance_name, user=user)
 
-    return render_template('orghim.html', svg_file=None, isomers_file=None, user=user)
+    return render_template('orghim.html', svg_file=None, isomer_files=None, user=user)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -716,6 +729,40 @@ def profile():
     user = flask_login.current_user
     if user.is_authenticated:
         return render_template('profile.html', user=user)
+    else:
+        return redirect(url_for('login'))
+
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+def edit_profile():
+    user = flask_login.current_user
+    if user.is_authenticated:
+        if request.method == 'POST':
+            username = request.form['username']
+            name = request.form['name']
+            surname = request.form['surname']
+            email = request.form['email']
+
+            user.username = username
+            user.surname = surname
+            user.name = name
+            user.email = email
+            if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                os.makedirs(app.config['UPLOAD_FOLDER'])
+
+            # Обработка загрузки аватара
+            if 'avatar' in request.files:
+                file = request.files['avatar']
+                if file:
+                    filename = secure_filename(file.filename)
+                    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                    user.avatar = filename  # Сохраняем имя файла в БД
+
+            db.session.commit()
+            flash('Ваш профиль обновлён успешно!', 'success')
+            return redirect(url_for('profile'))
+
+        return render_template('edit_profile.html', user=user)
     else:
         return redirect(url_for('login'))
 
