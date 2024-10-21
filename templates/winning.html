@@ -8,7 +8,11 @@
         <h2 class="text-center">Миниигра</h2>
         <div class="card mx-auto" style="max-width: 500px;">
             <div class="card-body">
+                {% if right_percent >= 50 %}
                 <h3 class="text-center text-success">Вы выиграли!</h3>
+                {% else %}
+                <h3 class="text-center text-danger">Вы проиграли!</h3>
+                {% endif %}
                 <p class="text-center">Процент правильных ответов: <strong>{{ right_percent }}%</strong></p>
                 <div class="text-center mt-4">
                     <a href="/minigame" class="btn btn-success">Начать новую игру</a>
