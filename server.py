@@ -11,6 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import quote
 import random
+from datetime import datetime
 # импортируем все библиотеки
 
 app = Flask(__name__)
@@ -276,7 +277,7 @@ def molyar_massa():
             dlyproverki, element_details = molecular_mass(chemical_formula)
             resultat = f"Молярная масса {chemical_formula}: {dlyproverki} г/моль"
             for element, mass, count, total_mass in element_details:
-                otdelno.append(f"{count} x {element} ({round(mass)} г/моль): {round(total_mass)} г")
+                otdelno.append(f"{count} x {element} ({round(mass)} г/моль): {round(total_mass)} г/моль")
         except Exception as e:
             print(f"Ошибка: {e}")
             return redirect('/')
@@ -385,6 +386,72 @@ def instruction():
 def documentation():
     user = flask_login.current_user
     return render_template('documentation.html', user=user)
+
+
+chat_history_file = 'chat_history.json'
+
+
+@app.route('/get_messages', methods=['GET'])
+def get_messages():
+    return jsonify(load_chat_history())
+
+
+# Загрузка истории чата из файла
+def load_chat_history():
+    if os.path.exists(chat_history_file):
+        with open(chat_history_file, 'r') as f:
+            return json.load(f)  # Загружаем данные из JSON
+    return []
+
+
+# Сохранение сообщения в файл
+def save_message(username, message):
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    chat_entry = {
+        'timestamp': timestamp,
+        'username': username,
+        'message': message
+    }
+
+    # Загружаем текущую историю чата
+    chat_history = load_chat_history()
+    chat_history.append(chat_entry)
+
+    # Сохраняем обновленную историю в JSON-файл
+    with open(chat_history_file, 'w') as f:
+        json.dump(chat_history, f, indent=4)
+
+
+# Удаление сообщения
+def delete_message(index):
+    chat_history = load_chat_history()
+    if 0 <= index < len(chat_history):
+        del chat_history[index]
+        with open(chat_history_file, 'w') as f:
+            json.dump(chat_history, f, indent=4)
+
+
+chat = load_chat_history()  # Загружаем историю чата при старте
+
+
+@app.route('/chat', methods=['GET', 'POST'])
+def chat_messages():
+    global chat
+    user = flask_login.current_user
+    if user.is_authenticated:
+        if request.method == 'POST':
+            if 'message' in request.form:  # Добавление сообщения
+                s = request.form["message"]
+                save_message(user.username, s)  # Сохраняем сообщение в файл
+            elif 'delete' in request.form:  # Удаление сообщения
+                index = int(request.form['delete'])
+                if user.username == 'admin123' or chat[index]['username'] == user.username:
+                    delete_message(index)  # Удаляем сообщение
+            chat = load_chat_history()  # Обновляем чат после сохранения/удаления
+            return redirect(url_for('chat_messages'))  # Перенаправляем на ту же страницу
+        return render_template('chat.html', user=user, chat=chat)
+    else:
+        return redirect(url_for('login'))
 
 
 @app.route('/tablica', methods=['GET', 'POST'])
