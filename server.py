@@ -422,6 +422,14 @@ def save_message(username, message):
         json.dump(chat_history, f, indent=4)
 
 
+def delete_all_messages():
+    chat_history = load_chat_history()
+    chat_history.clear()
+    if chat_history != '':
+        with open(chat_history_file, 'w') as f:
+            json.dump(chat_history, f, indent=4)
+
+
 # Удаление сообщения
 def delete_message(index):
     chat_history = load_chat_history()
@@ -447,6 +455,9 @@ def chat_messages():
                 index = int(request.form['delete'])
                 if user.username == 'admin123' or chat[index]['username'] == user.username:
                     delete_message(index)  # Удаляем сообщение
+            elif 'delete_all_messages' in request.form:
+                if user.username == 'admin123':
+                    delete_all_messages()
             chat = load_chat_history()  # Обновляем чат после сохранения/удаления
             return redirect(url_for('chat_messages'))  # Перенаправляем на ту же страницу
         return render_template('chat.html', user=user, chat=chat)
