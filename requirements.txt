@@ -1,4 +1,3 @@
 ﻿flask
-chempy
 flask_login
 werkzeug
