@@ -1,3 +1,5 @@
 ﻿flask
 flask_login
+chempy
+gunicorn
 werkzeug
